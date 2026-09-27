@@ -136,8 +136,43 @@ function App() {
   }, [isDarkMode]);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
+    setIsDarkMode((prev) => !prev);
   };
+
+  // Normalización tipográfica global para evitar que el texto de los botones se comprima o deforme.
+  useEffect(() => {
+    const styleId = "dynamic-button-typography-fix";
+    const existingStyle = document.getElementById(styleId);
+    if (existingStyle) existingStyle.remove();
+
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+      .secondary-button {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        font-stretch: normal !important;
+        letter-spacing: normal !important;
+        line-height: 1.2 !important;
+        white-space: nowrap !important;
+        writing-mode: horizontal-tb !important;
+        text-orientation: mixed !important;
+        text-rendering: optimizeLegibility;
+        box-sizing: border-box;
+        flex-shrink: 0;
+        transform: none !important;
+      }
+      .secondary-button:not([style*="width: 42px"]) {
+        min-width: max-content;
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      style.remove();
+    };
+  }, []);
 
   // Formulario Auth
   const [isRegistering, setIsRegistering] = useState(false);
@@ -948,14 +983,112 @@ function App() {
             </div>
           </div>
 
-          <button 
-            onClick={toggleTheme} 
-            className="secondary-button" 
-            style={{ width: "100%", marginBottom: "20px", justifyContent: "center", display: "flex", alignItems: "center", gap: "8px", fontWeight: "bold" }}
-            title="Cambiar preferencia de estilo"
+          <div
+            className="quick-controls"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "20px",
+              width: "100%",
+            }}
           >
-            {isDarkMode ? "🌙 Modo Oscuro" : "☀️ Modo Claro"}
-          </button>
+            <button
+              onClick={toggleTheme}
+              className="secondary-button"
+              style={{
+                width: "42px",
+                height: "42px",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+              title={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+              aria-label={isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  lineHeight: "1",
+                  width: "20px",
+                  height: "20px",
+                }}
+              >
+                {isDarkMode ? "🌙" : "☀️"}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setIsObedienteActive((prev) => !prev)}
+              className="secondary-button"
+              style={{
+                width: "42px",
+                height: "42px",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                background: isObedienteActive ? "var(--accent-primary)" : undefined,
+                color: isObedienteActive ? "#ffffff" : undefined,
+                borderColor: isObedienteActive ? "var(--accent-primary)" : undefined,
+              }}
+              title={isObedienteActive ? "Desactivar modo obediente" : "Activar modo obediente"}
+              aria-label={isObedienteActive ? "Desactivar modo obediente" : "Activar modo obediente"}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "20px",
+                  lineHeight: "1",
+                  width: "20px",
+                  height: "20px",
+                }}
+              >
+                ⚡
+              </span>
+            </button>
+
+            <button
+              onClick={togglePause}
+              className="secondary-button"
+              style={{
+                width: "42px",
+                height: "42px",
+                padding: "0",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                background: isPaused ? "#8f3030" : "var(--accent-bg)",
+                color: isPaused ? "#ffffff" : "var(--accent-text)",
+                borderColor: isPaused ? "#a84444" : "var(--accent-primary)",
+              }}
+              title={isPaused ? "Reanudar dinámica" : "Pausar dinámica"}
+              aria-label={isPaused ? "Reanudar dinámica" : "Pausar dinámica"}
+            >
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  lineHeight: "1",
+                  width: "20px",
+                  height: "20px",
+                }}
+              >
+                {isPaused ? "🔴" : "🟢"}
+              </span>
+            </button>
+          </div>
 
           {/* Iconografía monocromática y minimalista de trazo SVG puro */}
           <nav className="navigation">
@@ -1059,7 +1192,7 @@ function App() {
             <div>
               <strong style={{ color: "var(--text-main)" }}>{activeUserName}</strong>
               <div style={{ fontSize: "11px", color: "var(--accent-text)", marginTop: "2px" }}>
-                Rol: {currentRole} • Rango: <span style={{ color: currentRankInfo.color, fontWeight: "bold" }}>{currentRankInfo.icon} {currentRankInfo.rank}</span>
+                Rol: {currentRole}
               </div>
             </div>
           </div>
@@ -1105,30 +1238,6 @@ function App() {
             </p>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "flex-end" }}>
-            <div className="status-pill" style={{ background: "var(--accent-bg)", borderColor: "var(--accent-primary)", color: "var(--accent-text)" }}>
-              <span className="status-dot" style={{ background: isPaused ? "var(--text-muted)" : "var(--accent-primary)" }}></span>
-              {isPaused ? "Pausa Activada" : "Dinámica Activa"}
-            </div>
-
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button 
-                className="secondary-button"
-                style={{ background: "var(--bg-hover)", color: "var(--text-main)", borderColor: "var(--border-hover)" }}
-                onClick={togglePause}
-              >
-                {isPaused ? "Reanudar Dinámica" : "Pausa de Dinámica"}
-              </button>
-
-              <button 
-                className="secondary-button"
-                style={{ background: "var(--accent-primary)", color: "#ffffff", borderColor: "var(--accent-primary)", fontWeight: "bold" }}
-                onClick={() => setIsObedienteActive(true)}
-              >
-                ⚡ Modo Obediente
-              </button>
-            </div>
-          </div>
         </section>
 
         <section className="stats-grid">
@@ -1200,6 +1309,140 @@ function App() {
                       onChange={(e) => setEditLimits(e.target.value)}
                       style={{ width: "100%", padding: "10px", background: "var(--bg-main)", border: "1px solid var(--border-hover)", borderRadius: "8px", color: "var(--text-main)", resize: "vertical" }}
                     />
+                  </div>
+
+                  {/* VALORACIÓN DEL DOMINANTE — SOLO INTERFAZ VISUAL POR AHORA */}
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      paddingTop: "20px",
+                      borderTop: "1px solid var(--border-color)"
+                    }}
+                  >
+                    <div style={{ marginBottom: "18px" }}>
+                      <p className="eyebrow" style={{ marginBottom: "6px" }}>
+                        VALORACIÓN DEL DOMINANTE
+                      </p>
+
+                      <h3
+                        style={{
+                          margin: 0,
+                          fontSize: "20px",
+                          color: "var(--text-main)"
+                        }}
+                      >
+                        Reconoce los aspectos que más destacan
+                      </h3>
+
+                      <p
+                        style={{
+                          margin: "6px 0 0",
+                          color: "var(--text-muted)",
+                          fontSize: "13px",
+                          lineHeight: "1.5"
+                        }}
+                      >
+                        Valora desde tu propia experiencia aquellos aspectos de la dinámica
+                        que consideras más significativos.
+                      </p>
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: "14px"
+                      }}
+                    >
+                      {[
+                        {
+                          icon: "🧭",
+                          title: "Guía",
+                          description:
+                            "Capacidad para orientar la dinámica, proponer dirección y acompañar el desarrollo de la relación."
+                        },
+                        {
+                          icon: "🛡️",
+                          title: "Protector",
+                          description:
+                            "Atención al cuidado, seguridad, límites y bienestar dentro de la dinámica."
+                        },
+                        {
+                          icon: "🪞",
+                          title: "Introspectivo",
+                          description:
+                            "Capacidad de observar, reflexionar y comprender cómo evoluciona la dinámica y su propio papel."
+                        },
+                        {
+                          icon: "🎨",
+                          title: "Creativo",
+                          description:
+                            "Capacidad para crear tareas, experiencias y propuestas originales."
+                        }
+                      ].map((rating) => (
+                        <div
+                          key={rating.title}
+                          style={{
+                            padding: "16px",
+                            background: "var(--bg-main)",
+                            border: "1px solid var(--border-hover)",
+                            borderRadius: "12px"
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "28px",
+                              marginBottom: "8px"
+                            }}
+                          >
+                            {rating.icon}
+                          </div>
+
+                          <h4
+                            style={{
+                              margin: "0 0 6px",
+                              fontSize: "16px",
+                              color: "var(--text-main)"
+                            }}
+                          >
+                            {rating.title}
+                          </h4>
+
+                          <p
+                            style={{
+                              margin: "0 0 12px",
+                              fontSize: "12px",
+                              lineHeight: "1.5",
+                              color: "var(--text-muted)"
+                            }}
+                          >
+                            {rating.description}
+                          </p>
+
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                title={`${star} de 5 estrellas`}
+                                aria-label={`${star} de 5 estrellas`}
+                                style={{
+                                  border: "none",
+                                  background: "transparent",
+                                  padding: "2px",
+                                  cursor: "pointer",
+                                  fontSize: "22px",
+                                  lineHeight: "1",
+                                  color: "var(--accent-primary)"
+                                }}
+                              >
+                                ☆
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <button type="submit" className="secondary-button" style={{ background: "var(--accent-primary)", color: "#fff", fontWeight: "bold", padding: "12px", justifyContent: "center" }}>
@@ -1535,77 +1778,253 @@ function App() {
                       const isDomAssigned = task.createdByRole === "Dominante";
 
                       return (
-                        <div key={task.id} style={{ marginBottom: "12px" }}>
-                          <div className={`task-card ${task.completed ? "completed" : ""}`}>
-                            <button className="check-button" onClick={() => toggleTask(task.id, task.completed)}>
+                        <div key={task.id} style={{ marginBottom: "22px" }}>
+                          {/* TAREA PRINCIPAL */}
+                          <div
+                            className={`task-card ${task.completed ? "completed" : ""}`}
+                            style={{
+                              padding: "14px",
+                              borderRadius: "10px",
+                            }}
+                          >
+                            <button
+                              className="check-button"
+                              onClick={() => toggleTask(task.id, task.completed)}
+                            >
                               {task.completed ? "✓" : ""}
                             </button>
+
                             <div className="task-information">
-                              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                                <strong>{task.title}</strong>
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: "8px",
+                                  alignItems: "center",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <strong
+                                  style={{
+                                    fontSize: "15px",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  {task.title}
+                                </strong>
+
                                 {isDomAssigned && (
-                                  <span style={{ fontSize: "10px", background: "var(--accent-bg)", color: "var(--accent-text)", border: "1px solid var(--accent-primary)", padding: "1px 5px", borderRadius: "4px" }}>
+                                  <span
+                                    style={{
+                                      fontSize: "10px",
+                                      background: "var(--accent-bg)",
+                                      color: "var(--accent-text)",
+                                      border: "1px solid var(--accent-primary)",
+                                      padding: "2px 6px",
+                                      borderRadius: "4px",
+                                    }}
+                                  >
                                     Dominante
                                   </span>
                                 )}
                               </div>
-                              <span>{task.description}</span>
+
+                              {task.description && (
+                                <span
+                                  style={{
+                                    display: "block",
+                                    marginTop: "6px",
+                                    lineHeight: "1.5",
+                                  }}
+                                >
+                                  {task.description}
+                                </span>
+                              )}
+
                               {task.evidenceUrl && (
-                                <div>
-                                  <a href={task.evidenceUrl} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "var(--accent-text)", textDecoration: "underline" }}>
+                                <div style={{ marginTop: "8px" }}>
+                                  <a
+                                    href={task.evidenceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    style={{
+                                      fontSize: "11px",
+                                      color: "var(--accent-text)",
+                                      textDecoration: "underline",
+                                    }}
+                                  >
                                     Ver Evidencia Fotográfica ↗
                                   </a>
                                   <div>
-                                    <img src={task.evidenceUrl} alt="Evidencia" className="evidence-preview" />
+                                    <img
+                                      src={task.evidenceUrl}
+                                      alt="Evidencia"
+                                      className="evidence-preview"
+                                    />
                                   </div>
                                 </div>
                               )}
                             </div>
-                            
-                            <div className="task-points" style={{ marginRight: "8px" }}>+{task.points}</div>
+
+                            <div className="task-points" style={{ marginRight: "8px" }}>
+                              +{task.points}
+                            </div>
 
                             <div style={{ display: "flex", gap: "4px" }}>
-                              <button className="secondary-button" style={{ padding: "4px 8px", fontSize: "11px" }} onClick={() => handleAddTask(task.id)} title="Agregar Subtarea">
+                              <button
+                                className="secondary-button"
+                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                                onClick={() => handleAddTask(task.id)}
+                                title="Agregar Subtarea"
+                              >
                                 + Sub
                               </button>
-                              <button className="secondary-button" style={{ padding: "4px 8px", fontSize: "11px" }} onClick={() => handleEditTask(task)} title="Editar Tarea">
+
+                              <button
+                                className="secondary-button"
+                                style={{ padding: "4px 8px", fontSize: "11px" }}
+                                onClick={() => handleEditTask(task)}
+                                title="Editar Tarea"
+                              >
                                 ✎
                               </button>
-                              <button className="secondary-button" style={{ padding: "4px 8px", fontSize: "11px", color: "var(--text-muted)" }} onClick={() => handleDeleteTask(task)} title="Eliminar Tarea">
+
+                              <button
+                                className="secondary-button"
+                                style={{
+                                  padding: "4px 8px",
+                                  fontSize: "11px",
+                                  color: "var(--text-muted)",
+                                }}
+                                onClick={() => handleDeleteTask(task)}
+                                title="Eliminar Tarea"
+                              >
                                 ✕
                               </button>
                             </div>
                           </div>
 
+                          {/* BLOQUE DE SUBTAREAS */}
                           {subtasks.length > 0 && (
-                            <div style={{ paddingLeft: "28px", marginTop: "6px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                              {subtasks.map((sub) => (
-                                <div key={sub.id} className={`task-card ${sub.completed ? "completed" : ""}`} style={{ background: "var(--bg-main)", borderLeft: "2px solid var(--accent-primary)" }}>
-                                  <button className="check-button" onClick={() => toggleTask(sub.id, sub.completed)}>
-                                    {sub.completed ? "✓" : ""}
+                            <div
+                              style={{
+                                marginLeft: "30px",
+                                marginTop: "10px",
+                                paddingLeft: "16px",
+                                borderLeft: "2px solid var(--accent-primary)",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "8px",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: "10px",
+                                  fontWeight: 700,
+                                  letterSpacing: "0.08em",
+                                  color: "var(--text-muted)",
+                                  textTransform: "uppercase",
+                                  marginBottom: "2px",
+                                }}
+                              >
+                                SUBTAREAS
+                              </div>
+
+                              {subtasks.map((subtask) => (
+                                <div
+                                  key={subtask.id}
+                                  className={`task-card ${subtask.completed ? "completed" : ""}`}
+                                  style={{
+                                    background: "var(--bg-main)",
+                                    padding: "11px 12px",
+                                    borderRadius: "8px",
+                                    opacity: subtask.completed ? 0.65 : 1,
+                                  }}
+                                >
+                                  <button
+                                    className="check-button"
+                                    onClick={() => toggleTask(subtask.id, subtask.completed)}
+                                  >
+                                    {subtask.completed ? "✓" : ""}
                                   </button>
+
                                   <div className="task-information">
-                                    <strong>↳ {sub.title}</strong>
-                                    <span>{sub.description}</span>
-                                    {sub.evidenceUrl && (
-                                      <div>
-                                        <a href={sub.evidenceUrl} target="_blank" rel="noreferrer" style={{ fontSize: "11px", color: "var(--accent-text)", textDecoration: "underline" }}>
+                                    <strong
+                                      style={{
+                                        display: "block",
+                                        fontSize: "14px",
+                                        fontWeight: 600,
+                                        fontStyle: "italic",
+                                        lineHeight: "1.35",
+                                      }}
+                                    >
+                                      ↳ {subtask.title}
+                                    </strong>
+
+                                    {subtask.description && (
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          marginTop: "5px",
+                                          paddingLeft: "20px",
+                                          fontSize: "12px",
+                                          color: "var(--text-sub)",
+                                          fontStyle: "italic",
+                                          lineHeight: "1.5",
+                                        }}
+                                      >
+                                        {subtask.description}
+                                      </span>
+                                    )}
+
+                                    {subtask.evidenceUrl && (
+                                      <div style={{ marginTop: "7px", paddingLeft: "20px" }}>
+                                        <a
+                                          href={subtask.evidenceUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          style={{
+                                            fontSize: "11px",
+                                            color: "var(--accent-text)",
+                                            textDecoration: "underline",
+                                          }}
+                                        >
                                           Ver Evidencia Fotográfica ↗
                                         </a>
                                         <div>
-                                          <img src={sub.evidenceUrl} alt="Evidencia" className="evidence-preview" />
+                                          <img
+                                            src={subtask.evidenceUrl}
+                                            alt="Evidencia"
+                                            className="evidence-preview"
+                                          />
                                         </div>
                                       </div>
                                     )}
                                   </div>
 
-                                  <div className="task-points" style={{ marginRight: "8px" }}>+{sub.points}</div>
+                                  <div className="task-points" style={{ marginRight: "8px" }}>
+                                    +{subtask.points}
+                                  </div>
 
                                   <div style={{ display: "flex", gap: "4px" }}>
-                                    <button className="secondary-button" style={{ padding: "4px 8px", fontSize: "11px" }} onClick={() => handleEditTask(sub)} title="Editar Subtarea">
+                                    <button
+                                      className="secondary-button"
+                                      style={{ padding: "4px 8px", fontSize: "11px" }}
+                                      onClick={() => handleEditTask(subtask)}
+                                      title="Editar Subtarea"
+                                    >
                                       ✎
                                     </button>
-                                    <button className="secondary-button" style={{ padding: "4px 8px", fontSize: "11px", color: "var(--text-muted)" }} onClick={() => handleDeleteTask(sub)} title="Eliminar Subtarea">
+
+                                    <button
+                                      className="secondary-button"
+                                      style={{
+                                        padding: "4px 8px",
+                                        fontSize: "11px",
+                                        color: "var(--text-muted)",
+                                      }}
+                                      onClick={() => handleDeleteTask(subtask)}
+                                      title="Eliminar Subtarea"
+                                    >
                                       ✕
                                     </button>
                                   </div>
@@ -1626,32 +2045,87 @@ function App() {
             <div className="panel-header">
               <div>
                 <p className="eyebrow">GAMIFICACIÓN</p>
-                <h2>Insignias y Rango</h2>
+                <h2>Progreso</h2>
               </div>
             </div>
 
             <p style={{ color: "var(--text-sub)", fontSize: "13px", marginTop: "4px" }}>
-              Desbloquea rangos e insignias automáticas cumpliendo hábitos y acumulando puntos históricos:
+              Acumula puntos completando tareas y hábitos para avanzar de rango y desbloquear insignias.
             </p>
 
-            <div className="badges-container">
-              {badgesList.map((badge) => (
-                <div key={badge.id} className={`badge-card ${badge.unlocked ? "unlocked" : "locked"}`}>
-                  <span className="badge-icon">{badge.icon}</span>
-                  <div>
-                    <h4 className="badge-title">{badge.title}</h4>
-                    <p className="badge-desc">{badge.desc}</p>
-                  </div>
+            {/* PROGRESO DE PUNTOS */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                marginTop: "24px",
+                marginBottom: "28px",
+              }}
+            >
+              <div
+                style={{
+                  width: "170px",
+                  height: "170px",
+                  borderRadius: "50%",
+                  background: `conic-gradient(
+                    var(--accent-primary) 0deg,
+                    var(--accent-primary) 250deg,
+                    var(--bg-main) 250deg,
+                    var(--bg-main) 360deg
+                  )`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    width: "132px",
+                    height: "132px",
+                    borderRadius: "50%",
+                    background: "var(--bg-panel)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    textAlign: "center",
+                  }}
+                >
+                  <strong style={{ fontSize: "28px", lineHeight: "1" }}>
+                    {totalEarnedHistorical}
+                  </strong>
+                  <span style={{ fontSize: "12px", color: "var(--text-sub)", marginTop: "6px" }}>
+                    puntos
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            <div style={{ marginTop: "24px" }}>
-              <div className="mini-stat">
-                <span>Rango Asignado</span>
-                <strong style={{ color: currentRankInfo.color }}>{currentRankInfo.icon} {currentRankInfo.rank}</strong>
               </div>
 
+            </div>
+
+            {/* INSIGNIAS */}
+            <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "20px" }}>
+              <h3 style={{ margin: "0 0 12px 0" }}>Insignias</h3>
+              <p style={{ color: "var(--text-sub)", fontSize: "12px", marginBottom: "16px" }}>
+                Desbloquea insignias automáticas cumpliendo objetivos.
+              </p>
+
+              <div className="badges-container">
+                {badgesList.map((badge) => (
+                  <div key={badge.id} className={`badge-card ${badge.unlocked ? "unlocked" : "locked"}`}>
+                    <span className="badge-icon">{badge.icon}</span>
+                    <div>
+                      <h4 className="badge-title">{badge.title}</h4>
+                      <p className="badge-desc">{badge.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* INFORMACIÓN DE PROGRESO */}
+            <div style={{ marginTop: "24px", display: "flex", flexDirection: "column", gap: "8px" }}>
               <div className="mini-stat">
                 <span>Puntos Acumulados Totales</span>
                 <strong>{totalEarnedHistorical} pts</strong>
