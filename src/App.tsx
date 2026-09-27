@@ -1,21 +1,24 @@
 import { useState, useEffect } from "react";
+
 import { db, auth } from "./firebase";
-import { 
-  collection, 
-  onSnapshot, 
-  doc, 
-  updateDoc, 
+
+import {
+  collection,
+  onSnapshot,
+  doc,
+  updateDoc,
   addDoc,
   setDoc,
   deleteDoc,
   getDoc
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+} from "firebase/firestore";
+
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "firebase/auth";
 
 type Task = {
   id: string;
