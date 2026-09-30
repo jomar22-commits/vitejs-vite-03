@@ -410,3 +410,145 @@ export interface PointTransaction {
 
   createdAt: Timestamp;
 }
+// ======================================================
+// DAILY PERSONAL CONTEXT
+// ======================================================
+
+/**
+ * Contexto personal registrado para un día concreto.
+ *
+ * Es información PERSONAL del usuario.
+ * No pertenece automáticamente a una DynamicSpace
+ * y no se comparte con otros miembros por defecto.
+ */
+export interface DailyContext {
+  id: ID;
+
+  userId: ID;
+  personalSpaceId: ID;
+
+  /**
+   * Día representado por este registro.
+   * Formato: YYYY-MM-DD
+   */
+  date: string;
+
+  /**
+   * Estado emocional general.
+   *
+   * Escala:
+   * 1 = muy bajo
+   * 2 = bajo
+   * 3 = neutral
+   * 4 = bueno
+   * 5 = muy bueno
+   */
+  mood?: MoodValue;
+
+  /**
+   * Nivel de energía percibido.
+   *
+   * Escala 1–5.
+   */
+  energy?: EnergyValue;
+
+  /**
+   * Síntomas o sensaciones registrados durante el día.
+   *
+   * Se permiten varios.
+   */
+  symptoms?: DailySymptom[];
+
+  /**
+   * Información opcional relacionada con
+   * menstruación/ciclo.
+   *
+   * No todos los usuarios necesitan utilizarla.
+   */
+  cycle?: CycleContext;
+
+  /**
+   * Nota privada breve asociada al contexto diario.
+   *
+   * Esto NO sustituye al Diario.
+   */
+  note?: string;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+
+// ======================================================
+// MOOD
+// ======================================================
+
+export type MoodValue =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5;
+
+
+// ======================================================
+// ENERGY
+// ======================================================
+
+export type EnergyValue =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5;
+
+
+// ======================================================
+// DAILY SYMPTOMS
+// ======================================================
+
+export type DailySymptom =
+  | "cramps"
+  | "headache"
+  | "bloating"
+  | "fatigue"
+  | "stress"
+  | "anxiety"
+  | "irritability"
+  | "sadness"
+  | "low_motivation"
+  | "sleep_issues"
+  | "body_pain"
+  | "other";
+
+
+// ======================================================
+// CYCLE CONTEXT
+// ======================================================
+
+export type MenstrualFlow =
+  | "none"
+  | "spotting"
+  | "light"
+  | "medium"
+  | "heavy";
+
+
+export interface CycleContext {
+  /**
+   * Indica si existe sangrado menstrual
+   * registrado ese día.
+   */
+  period: boolean;
+
+  /**
+   * Intensidad registrada.
+   */
+  flow?: MenstrualFlow;
+
+  /**
+   * Día estimado/registrado dentro del ciclo,
+   * cuando esté disponible.
+   */
+  cycleDay?: number;
+}
