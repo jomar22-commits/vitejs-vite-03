@@ -281,7 +281,90 @@ export interface Habit {
 
   createdAt: Timestamp;
 }
+// ======================================================
+// HABIT ASSIGNMENTS
+// ======================================================
 
+/**
+ * Relaciona un hábito con un Ejecutor concreto.
+ *
+ * Al igual que con TaskAssignment, cada Ejecutor
+ * mantiene su propio progreso.
+ */
+export interface HabitAssignment {
+  id: ID;
+
+  habitId: ID;
+  spaceId: ID;
+
+  executorUserId: ID;
+
+  active: boolean;
+
+  assignedAt: Timestamp;
+
+  endedAt?: Timestamp;
+}
+
+
+// ======================================================
+// HABIT OCCURRENCES
+// ======================================================
+
+export type HabitOccurrenceStatus =
+  | "pending"
+  | "submitted"
+  | "validated"
+  | "rejected"
+  | "missed";
+
+
+/**
+ * Representa UNA ejecución concreta de un hábito.
+ *
+ * Ejemplo:
+ *
+ * "Beber 2L" asignado a Alex
+ *
+ * 2026-09-29 -> validated
+ * 2026-09-30 -> submitted
+ * 2026-10-01 -> pending
+ *
+ * Cada fecha conserva su propio estado,
+ * validación y eventual puntuación.
+ */
+export interface HabitOccurrence {
+  id: ID;
+
+  habitId: ID;
+  habitAssignmentId: ID;
+
+  spaceId: ID;
+
+  executorUserId: ID;
+
+  /**
+   * Día al que pertenece esta ocurrencia.
+   *
+   * Formato recomendado:
+   * YYYY-MM-DD
+   */
+  occurrenceDate: string;
+
+  status: HabitOccurrenceStatus;
+
+  createdAt: Timestamp;
+
+  submittedAt?: Timestamp;
+
+  validatedAt?: Timestamp;
+  validatedByUserId?: ID;
+
+  rejectedAt?: Timestamp;
+  rejectedByUserId?: ID;
+
+  rejectionReason?: string;
+}
 
 // ======================================================
 // POINT LEDGER
