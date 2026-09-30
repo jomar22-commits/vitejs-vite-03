@@ -149,12 +149,9 @@ export interface Membership {
 
 export type InvitationStatus =
   | "pending_owner_approval"
-  | "pending_invitee"
+  | "pending_invitee_acceptance"
   | "accepted"
-  | "rejected_by_owner"
-  | "declined_by_invitee"
-  | "cancelled"
-  | "expired";
+  | "rejected";
 
 
 /**
@@ -164,51 +161,27 @@ export type InvitationStatus =
  * finalmente el ingreso.
  */
 export interface Invitation {
-  id: ID;
+  id: string;
 
-  spaceId: ID;
+  spaceId: string;
 
-  /**
-   * Miembro que inició la invitación.
-   */
-  invitedByUserId: ID;
+  invitedByUserId: string;
 
-  /**
-   * Usuario invitado si ya tiene cuenta.
-   *
-   * Puede ser null cuando la invitación se realizó
-   * por email a alguien que todavía no está registrado.
-   */
-  invitedUserId?: ID;
+  inviteeIdentifier: string;
 
-  /**
-   * Identificadores utilizados para localizar/invitar.
-   */
-  invitedEmail?: string;
-  invitedUsername?: string;
-
-  /**
-   * Rol propuesto dentro de la dinámica.
-   */
   proposedRole: DynamicRole;
 
   status: InvitationStatus;
 
-  createdAt: Timestamp;
+  createdAt: string;
 
-  /**
-   * Se completa cuando el Creador Original
-   * autoriza explícitamente la invitación.
-   */
-  approvedByUserId?: ID;
-  approvedAt?: Timestamp;
+  approvedByUserId?: string;
+  approvedAt?: string;
 
-  /**
-   * Se completa cuando el invitado acepta.
-   */
-  acceptedAt?: Timestamp;
+  acceptedByUserId?: string;
+  acceptedAt?: string;
 
-  expiresAt?: Timestamp;
+  rejectedAt?: string;
 }
 
 
