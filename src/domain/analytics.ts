@@ -1028,3 +1028,314 @@ function formatDateOnly(
 
   return `${year}-${month}-${day}`;
 }
+// ======================================================
+// VALIDATION ANALYTICS
+// ======================================================
+
+export interface ValidationAnalytics {
+  tasks: {
+    awaitingValidation: number;
+    validated: number;
+    rejected: number;
+
+    averageValidationHours?: number;
+
+    waitingLessThan24Hours: number;
+    waiting24To48Hours: number;
+    waitingMoreThan48Hours: number;
+  };
+
+  habits: {
+    awaitingValidation: number;
+    validated: number;
+    rejected: number;
+
+    averageValidationHours?: number;
+
+    waitingLessThan24Hours: number;
+    waiting24To48Hours: number;
+    waitingMoreThan48Hours: number;
+  };
+}
+
+
+// ======================================================
+// BUILD VALIDATION ANALYTICS
+// ======================================================
+
+/**
+ * Analiza el circuito:
+ *
+ * Ejecutor entrega
+ *        ↓
+ * submitted
+ *        ↓
+ * Creador revisa
+ *        ↓
+ * validated / rejected
+ *
+ * IMPORTANTE:
+ * Una entrega pendiente de validación NO debe
+ * interpretarse como incumplimiento del Ejecutor.
+ */
+export function buildValidationAnalytics(
+  spaceId: string,
+  taskAssignments: TaskAssignment[],
+  habitOccurrences: HabitOccurrence[],
+  now: string,
+): ValidationAnalytics {
+  const nowTime =
+    new Date(now).getTime();
+
+
+  // ----------------------------------------------------
+  // TASKS
+  // ----------------------------------------------------
+
+  const spaceTaskAssignments =
+    taskAssignments.filter(
+      (assignment) =>
+        assignment.spaceId === spaceId,
+    );
+
+
+  const taskAwaitingValidation =
+    spaceTaskAssignments.filter(
+      (assignment) =>
+        assignment.status === "submitted",
+    );
+
+
+  const validatedTaskAssignments =
+    spaceTaskAssignments.filter(
+      (assignment) =>
+        assignment.status === "validated",
+    );
+
+
+  const rejectedTaskAssignments =
+    spaceTaskAssignments.filter(
+      (assignment) =>
+        assignment.status === "rejected",
+    );
+
+
+  const taskValidationDurations =
+    validatedTaskAssignments
+      .filter(
+        (assignment) =>
+          assignment.submittedAt !== undefined &&
+          assignment.validatedAt !== undefined,
+      )
+      .map(
+        (assignment) =>
+          hoursBetween(
+            assignment.submittedAt!,
+            assignment.validatedAt!,
+          ),
+      );
+
+
+  const taskWaitingBuckets =
+    buildWaitingBuckets(
+      taskAwaitingValidation
+        .map(
+          (assignment) =>
+            assignment.submittedAt,
+        )
+        .filter(
+          (
+            timestamp,
+          ): timestamp is string =>
+            timestamp !== undefined,
+        ),
+      nowTime,
+    );
+
+
+  // ----------------------------------------------------
+  // HABITS
+  // ----------------------------------------------------
+
+  const spaceHabitOccurrences =
+    habitOccurrences.filter(
+      (occurrence) =>
+        occurrence.spaceId === spaceId,
+    );
+
+
+  const habitAwaitingValidation =
+    spaceHabitOccurrences.filter(
+      (occurrence) =>
+        occurrence.status === "submitted",
+    );
+
+
+  const validatedHabitOccurrences =
+    spaceHabitOccurrences.filter(
+      (occurrence) =>
+        occurrence.status === "validated",
+    );
+
+
+  const rejectedHabitOccurrences =
+    spaceHabitOccurrences.filter(
+      (occurrence) =>
+        occurrence.status === "rejected",
+    );
+
+
+  const habitValidationDurations =
+    validatedHabitOccurrences
+      .filter(
+        (occurrence) =>
+          occurrence.submittedAt !== undefined &&
+          occurrence.validatedAt !== undefined,
+      )
+      .map(
+        (occurrence) =>
+          hoursBetween(
+            occurrence.submittedAt!,
+            occurrence.validatedAt!,
+          ),
+      );
+
+
+  const habitWaitingBuckets =
+    buildWaitingBuckets(
+      habitAwaitingValidation
+        .map(
+          (occurrence) =>
+            occurrence.submittedAt,
+        )
+        .filter(
+          (
+            timestamp,
+          ): timestamp is string =>
+            timestamp !== undefined,
+        ),
+      nowTime,
+    );
+
+
+  // ----------------------------------------------------
+  // RESULT
+  // ----------------------------------------------------
+
+  return {
+    tasks: {
+      awaitingValidation:
+        taskAwaitingValidation.length,
+
+      validated:
+        validatedTaskAssignments.length,
+
+      rejected:
+        rejectedTaskAssignments.length,
+
+      averageValidationHours:
+        average(
+          taskValidationDurations,
+        ),
+
+      waitingLessThan24Hours:
+        taskWaitingBuckets.lessThan24,
+
+      waiting24To48Hours:
+        taskWaitingBuckets.between24And48,
+
+      waitingMoreThan48Hours:
+        taskWaitingBuckets.moreThan48,
+    },
+
+    habits: {
+      awaitingValidation:
+        habitAwaitingValidation.length,
+
+      validated:
+        validatedHabitOccurrences.length,
+
+      rejected:
+        rejectedHabitOccurrences.length,
+
+      averageValidationHours:
+        average(
+          habitValidationDurations,
+        ),
+
+      waitingLessThan24Hours:
+        habitWaitingBuckets.lessThan24,
+
+      waiting24To48Hours:
+        habitWaitingBuckets.between24And48,
+
+      waitingMoreThan48Hours:
+        habitWaitingBuckets.moreThan48,
+    },
+  };
+}
+
+
+// ======================================================
+// VALIDATION HELPERS
+// ======================================================
+
+interface WaitingBuckets {
+  lessThan24: number;
+  between24And48: number;
+  moreThan48: number;
+}
+
+
+function buildWaitingBuckets(
+  submittedTimestamps: string[],
+  nowTime: number,
+): WaitingBuckets {
+  let lessThan24 = 0;
+  let between24And48 = 0;
+  let moreThan48 = 0;
+
+  for (
+    const submittedAt
+    of submittedTimestamps
+  ) {
+    const submittedTime =
+      new Date(
+        submittedAt,
+      ).getTime();
+
+    const waitingHours =
+      (
+        nowTime -
+        submittedTime
+      ) /
+      3_600_000;
+
+
+    if (waitingHours < 24) {
+      lessThan24 += 1;
+    } else if (waitingHours <= 48) {
+      between24And48 += 1;
+    } else {
+      moreThan48 += 1;
+    }
+  }
+
+
+  return {
+    lessThan24,
+    between24And48,
+    moreThan48,
+  };
+}
+
+
+function hoursBetween(
+  start: string,
+  end: string,
+): number {
+  return (
+    new Date(end).getTime() -
+    new Date(start).getTime()
+  ) / 3_600_000;
+}
